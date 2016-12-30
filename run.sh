@@ -4,7 +4,7 @@ checkPatterns() {
     keepit=$3
     if [ -n "$1" ]; then
         for PATTERN in $(echo $1 | tr "," "\n"); do
-        if [[ "$2" = $PATTERN* ]]; then
+        if [[ "$2" =~ ^${PATTERN} ]]; then
             if [ $DEBUG ]; then echo "DEBUG: Matches $PATTERN - keeping"; fi
             keepit=1
         else

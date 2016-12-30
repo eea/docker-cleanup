@@ -27,14 +27,14 @@ The default parameters can be overridden by setting environment variables on the
  * **DEBUG** - Set to 1 to enable more debugging output on pattern matches
  * **DOCKER_API_VERSION** - The docker API version to use. This defaults to 1.20, but you can override it here in case the docker version on your host differs from the one that is installed in this container. You can find this on your host system by running `docker version --format '{{.Client.APIVersion}}'`.
 
-Note that **KEEP_IMAGES**, **KEEP_CONTAINERS**, and **KEEP_CONTAINERS_NAMED** are left-anchored bash shell pattern matching lists (NOT regexps).  Therefore, the image **foo/bar:tag** will be matched by ANY of the following:
+Note that **KEEP_IMAGES**, **KEEP_CONTAINERS**, and **KEEP_CONTAINERS_NAMED** are left-anchored regexs.  Therefore, the image **foo/bar:tag** will be matched by ANY of the following:
 
  * foo/bar:tag
  * foo/bar
  * foo/b
- * [[:alpha:]]/bar
- * \*/\*:tag
- * \*:tag
+ * [[:alpha:]]*/bar
+ * .\*/.\*:tag
+ * .\*:tag
  * foo/\*:tag
 
 However it will not match
@@ -43,11 +43,10 @@ However it will not match
  * bar:tag
  * /bar
  * :tag
- * [[:alpha:]]:tag
+ * [[:alpha:]]*:tag
 
-By default, both are set to **\*\*None\*\*** which is the same as the blank string.  If you want to keep ALL images or containers, effectively disabling this 
-part of the cleanup, then you should use **\*:\*** to match all images.  Do not 
-use a bare **\*** as this will be taken as a filename match.
+By default, all are set to `**None**` which is the same as the blank string.  If you want to keep ALL images, volumes or containers, effectively disabling this 
+part of the cleanup, then you should use `**All**` to match it all.
 
 ## Deployment
 The image uses the Docker client to to list and remove containers and images. For this reason the Docker client and socket is mapped into the container.
