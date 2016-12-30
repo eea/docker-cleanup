@@ -57,6 +57,13 @@ if [ "${KEEP_CONTAINERS_NAMED}" == "**All**" ]; then
     KEEP_CONTAINERS_NAMED="."
 fi
 
+if [ "${KEEP_VOLUMES}" == "**None**" ]; then
+    unset KEEP_VOLUMES
+fi
+if [ "${KEEP_VOLUMES}" == "**All**" ]; then
+    KEEP_VOLUMES="."
+fi
+
 if [ "${LOOP}" != "false" ]; then
     LOOP=true
 fi
@@ -76,16 +83,25 @@ do
     if [ $DEBUG ]; then echo DEBUG: Starting loop; fi
 
     # Cleanup unused volumes
-
-    if [[ $(docker version --format '{{(index .Server.Version)}}' | grep -E '^[01]\.[012345678]\.') ]]; then
-      echo "=> Removing unused volumes using 'docker-cleanup-volumes.sh' script"
-      /docker-cleanup-volumes.sh
+    # If KEEP_VOLUMES is a . then all volumes are kept and there is no need to check.
+    if [ "${KEEP_VOLUMES}" != "." ]; then
+      if [[ $(docker version --format '{{(index .Server.Version)}}' | grep -E '^[01]\.[012345678]\.') ]]; then
+        echo "=> Removing unused volumes using 'docker-cleanup-volumes.sh' script"
+        /docker-cleanup-volumes.sh
+      else
+        echo "=> Removing unused volumes using native 'docker volume' command"
+        for volume in $(docker volume ls -f dangling=true | awk '$1 == "local" {print $2}'); do
+          keepit=0
+          checkPatterns "${KEEP_VOLUMES}" "${volume}" $keepit
+          keepit=$?
+          if [[ $keepit -eq 0 ]]; then
+            echo "=> Deleting unused volume ${volume}"
+            docker volume rm "${volume}"
+          fi
+        done
+      fi
     else
-      echo "=> Removing unused volumes using native 'docker volume' command"
-      for volume in $(docker volume ls -qf dangling=true); do
-        echo "Deleting ${volume}"
-        docker volume rm "${volume}"
-      done
+      echo "=> Configured to not clean volumes"
     fi
 
     IFS='
