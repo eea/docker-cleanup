@@ -1,5 +1,8 @@
 #!/bin/bash
 
+#
+# Returns 1 if pattern matches. Returns $3 if not.
+#
 checkPatterns() {
     keepit=$3
     if [ -n "$1" ]; then
@@ -13,6 +16,16 @@ checkPatterns() {
         done
     fi
     return $keepit
+}
+
+info() {
+  echo "=>" "$@"
+}
+
+debug() {
+  if [ $DEBUG ]; then
+    echo "DEBUG:" "$@"
+  fi
 }
 
 if [ ! -e "/var/run/docker.sock" ]; then
@@ -108,24 +121,27 @@ do
  '
 
     # Cleanup exited/dead containers
-    echo "=> Removing exited/dead containers"
-    EXITED_CONTAINERS_IDS="`docker ps -a -q -f status=exited -f status=dead | xargs echo`"
-    for CONTAINER_ID in $EXITED_CONTAINERS_IDS; do
-      CONTAINER_IMAGE=$(docker inspect --format='{{(index .Config.Image)}}' $CONTAINER_ID)
-      CONTAINER_NAME=$(docker inspect --format='{{(index .Name)}}' $CONTAINER_ID)
-      if [ $DEBUG ]; then echo "DEBUG: Check container image $CONTAINER_IMAGE named $CONTAINER_NAME"; fi
-      keepit=0
-      checkPatterns "${KEEP_CONTAINERS}" "${CONTAINER_IMAGE}" $keepit
-      keepit=$?
-      checkPatterns "${KEEP_CONTAINERS_NAMED}" "${CONTAINER_NAME}" $keepit
-      keepit=$?
-      if [[ $keepit -eq 0 ]]; then
-        echo "Removing stopped container $CONTAINER_ID"
-        docker rm -v $CONTAINER_ID
-      fi
-    done
-    unset CONTAINER_ID
-
+    if [[ "${KEEP_CONTAINERS}" == "." || "${KEEP_CONTAINERS_NAMED}" == "." ]]; then
+      echo "=> Configured to not clean containers"
+    else
+      echo "=> Removing exited/dead containers"
+      EXITED_CONTAINERS_IDS="`docker ps -a -q -f status=exited -f status=dead | xargs echo`"
+      for CONTAINER_ID in $EXITED_CONTAINERS_IDS; do
+        CONTAINER_IMAGE=$(docker inspect --format='{{(index .Config.Image)}}' $CONTAINER_ID)
+        CONTAINER_NAME=$(docker inspect --format='{{(index .Name)}}' $CONTAINER_ID)
+        if [ $DEBUG ]; then echo "DEBUG: Check container image $CONTAINER_IMAGE named $CONTAINER_NAME"; fi
+        keepit=0
+        checkPatterns "${KEEP_CONTAINERS}" "${CONTAINER_IMAGE}" $keepit
+        keepit=$?
+        checkPatterns "${KEEP_CONTAINERS_NAMED}" "${CONTAINER_NAME}" $keepit
+        keepit=$?
+        if [[ $keepit -eq 0 ]]; then
+          echo "Removing stopped container $CONTAINER_ID"
+          docker rm -v $CONTAINER_ID
+        fi
+      done
+      unset CONTAINER_ID
+    fi
     echo "=> Removing unused images"
 
     # Get all containers in "created" state
