@@ -1,7 +1,7 @@
 # Docker Cleanup
 This image will periodically clean up exited containers and remove images and volumes that aren't in use by a
-running container. Based on [tutumcloud/image-cleanup](https://github.com/tutumcloud/image-cleanup) and
-[chadoe/docker-cleanup-volumes](https://github.com/chadoe/docker-cleanup-volumes) with some small fixes.
+running container. Based on [meltwater/docker-cleanup](https://github.com/meltwater/docker-cleanup)
+with some small changes.
 
 **WARNING: This script will remove all exited containers, data-only containers and unused images unless you 
 carefully exclude them. Take care if you mount /var/lib/docker into the container since that will clean 
@@ -53,6 +53,28 @@ The image uses the Docker client to to list and remove containers and images. Fo
 
 If the */var/lib/docker* directory is mapped into the container this script will also clean up orphaned Docker volumes.
 
+### Docker-compose and Rancher
+
+```yml
+cleanup:
+  image: eeacms/docker-cleanup:2.1.0
+  environment:
+    CLEAN_PERIOD: '86400'
+    DEBUG: '0'
+    DELAY_TIME: '900'
+    KEEP_CONTAINERS: '**All**'
+    KEEP_CONTAINERS_NAMED: '**All**'
+    KEEP_VOLUMES: '**None**'
+    KEEP_IMAGES: rancher/, busybox, tianon/
+    LOOP: 'true'
+  labels:
+    io.rancher.scheduler.global: 'true'
+    io.rancher.scheduler.affinity:host_label_ne: janitor.exclude=true
+  privileged: true
+  volumes:
+  - /var/run/docker.sock:/var/run/docker.sock
+  - /var/lib/docker:/var/lib/docker
+```
 ### Systemd and CoreOS/Fleet
 
 Create a [Systemd unit](http://www.freedesktop.org/software/systemd/man/systemd.unit.html) file
@@ -70,7 +92,7 @@ Requires=docker.service
 WantedBy=multi-user.target
 
 [Service]
-Environment=IMAGE=meltwater/docker-cleanup:latest NAME=docker-cleanup
+Environment=IMAGE=eeacms/docker-cleanup:latest NAME=docker-cleanup
 
 # Allow docker pull to take some time
 TimeoutStartSec=600
@@ -107,7 +129,7 @@ classes:
 
 docker::run_instance:
   'cleanup':
-    image: 'meltwater/docker-cleanup:latest'
+    image: 'eeacms/docker-cleanup:latest'
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:rw"
       - "/var/lib/docker:/var/lib/docker:rw"
@@ -118,12 +140,12 @@ docker::run_instance:
 docker run \
   -v /var/run/docker.sock:/var/run/docker.sock:rw \
   -v /var/lib/docker:/var/lib/docker:rw \
-  meltwater/docker-cleanup:latest
+  eeacms/docker-cleanup:latest
 ```
 
 ### Kubernetes
 
-You can find a Kubernetes `DaemonSet` configuration, that will allow you to run the `meltwater/docker-cleanup` container on every node of your cluster.
+You can find a Kubernetes `DaemonSet` configuration, that will allow you to run the `eeacms/docker-cleanup` container on every node of your cluster.
 
 ```
 kubectl create -f contrib/k8s-daemonset.yml

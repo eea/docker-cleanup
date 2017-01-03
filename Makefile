@@ -14,10 +14,10 @@ help:
 default: build
 
 build:
-	docker build --rm -t meltwater/docker-cleanup .
+	docker build --rm -t eeacms/docker-cleanup .
 
 run:
-	docker run --env-file ./env.list --name docker-cleanup -v /var/run/docker.sock:/var/run/docker.sock:rw -v /var/lib/docker:/var/lib/docker:rw -d meltwater/docker-cleanup
+	docker run --env-file ./env.list --name docker-cleanup -v /var/run/docker.sock:/var/run/docker.sock:rw -v /var/lib/docker:/var/lib/docker:rw -d eeacms/docker-cleanup
 
 int:
 	docker exec -it docker-cleanup bash
