@@ -105,6 +105,14 @@ if [ "${KEEP_VOLUMES}" == "**All**" ]; then
     KEEP_VOLUMES="."
 fi
 
+if [ "${CLEAN_NON_RANCHER}" == "**No**" ]; then
+    unset CLEAN_NON_RANCHER
+fi
+if [ "${CLEAN_NON_RANCHER}" == "**All**" ]; then
+    CLEAN_NON_RANCHER="."
+fi
+
+
 if [ "${LOOP}" != "false" ]; then
     LOOP=true
 fi
@@ -147,8 +155,8 @@ do
 
 
     # Cleanup blocked non-rancher containers
-    # If CLEAN_NON_RANCHER is not YES then all containers are kept and there is no need to check.
-    if [[ "${CLEAN_NON_RANCHER}" != "YES" ]]; then
+    # If CLEAN_NON_RANCHER is a .  then all containers are kept and there is no need to check.
+    if [ "${CLEAN_NON_RANCHER}" != "." ]; then
         info "Removing blocked containers using 'docker-cleanup-containers.sh' script"
         /docker-cleanup-containers.sh
     else
