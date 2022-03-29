@@ -15,7 +15,8 @@ ENV CLEAN_PERIOD=**None** \
 # run.sh script uses some bash specific syntax
 RUN apk add --update bash docker grep jq
 
-# Install cleanup script
+# Install cleanup scripts
 ADD docker-cleanup-volumes.sh /docker-cleanup-volumes.sh
+ADD docker-cleanup-containers.sh /docker-cleanup-containers.sh
 ADD run.sh /run.sh
 
