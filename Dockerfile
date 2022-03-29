@@ -7,6 +7,7 @@ ENV CLEAN_PERIOD=**None** \
     KEEP_IMAGES=**None** \
     KEEP_CONTAINERS=**None** \
     KEEP_VOLUMES=**None** \
+    KEEP_NON_RANCHER=**All** \
     LOOP=true \
     DEBUG=0 \
     DOCKER_API_VERSION=1.20
