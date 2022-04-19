@@ -12,7 +12,7 @@ sed -i 's/\(T[0-9][0-9]:[0-9][0-9]:[0-9][0-9]\)\.[0-9]*Z/\1Z/g' docker_data
 date_compare=$(echo $(( `date +%s`-$HOURS_TO_KEEP*60*60 )) | jq 'todate')
 
 
-names=$(cat docker_data | jq ".[] | select (.Created < $date_compare ) | select  (.Config.Labels|length == 0) | .Name + \" \" + .Created ")
+names=$(cat docker_data | jq ".[] | select (.Created < $date_compare ) | select  (.Config.Labels | ( has (\"io.rancher.container.system\") or has (\"io.rancher.container.name\") ) | not ) | .Name + \" \" + .Created ")
 
 if [ -n "$names" ]; then
   echo "Found containers to stop and remove:"
